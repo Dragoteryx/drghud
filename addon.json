@@ -1,0 +1,11 @@
+{
+	"title"		:	"DrGHUD for Sandbox | Modern HUD",
+	"type"		:	"effects",
+	"tags"		:	["fun", "realism"],
+	"ignore"	:
+	[
+		"*.psd",
+		"*.vcproj",
+		"*.svn*"
+	]
+}
