@@ -558,7 +558,7 @@ if CLIENT then
 
     end
     -- radar
-    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() then --
+    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() then
       local radius = larg*1.25*DrGHUD.RadarScale:GetFloat()
       local rad3 = radius/3
       local x = scrWidth - distance - radius
@@ -568,6 +568,10 @@ if CLIENT then
       local pos
       if possessing then pos = DrGBase.Nextbot.Possessing(ply):GetPos()
       else pos = ply:GetPos() end
+      local start
+      if possessing then
+        start = DrGBase.Nextbot.Possessing(ply):EyePos()
+      else start = EyePos() end
       local pos2D = Vector(pos.x, pos.y, 0)
       DrGHUD.DrawCircle(x, y, radius, nb, DrGHUD.PickColor("background"), nil, {blur = true})
       local points = DrGHUD.GetCirclePoints(x, y, radius, nb)
@@ -592,10 +596,6 @@ if CLIENT then
           else continue end
         else dist = pos2D:Distance(icon.pos2D) end
         local size = ecart/2
-        local start
-        if possessing then
-          start = DrGBase.Nextbot.Possessing(ply):EyePos()
-        else start = EyePos() end
         local tr = util.TraceLine({
           start = start,
           endpos = icon.pos + Vector(0, 0, 10),
@@ -820,7 +820,7 @@ else
           else rel = DRGHUD_IGNORE end
         end
         if rel == DRGHUD_IGNORE then continue end
-        local type = hook.Run("DrGHUDEntityIconType", ent, ply) or DRGHUD_TYPE_DEFAULT
+        local type = hook.Run("DrGHUDEntityIconType", ent, ply)
         --local color = hook.Run("DrGHUDEntityIconColor", ent, ply)
         local outside = hook.Run("DrGHUDEntityIconOutside", ent, ply)
         if outside then outside = true else outside = false end
@@ -830,7 +830,7 @@ else
           --color = color,
           outside = outside,
           rel = rel,
-          type = type,
+          type = type or DRGHUD_TYPE_DEFAULT,
           pvs = ply:TestPVS(ent)
         }
         if type == DRGHUD_TYPE_MATERIAL then
