@@ -507,7 +507,10 @@ if CLIENT then
         elseif entIcon.rel == DRGHUD_ENEMY then
           healthColor = DrGHUD.PickColor(DRGHUD_ENEMY)
         end
-        DrGHUD.DrawBar(x, y + ecart*1.5, long - ecart*5, larg/5, "HEALTH", ent:Health(), ent:GetMaxHealth(), healthColor, true)
+        local health = ent:Health()
+        local maxHealth = ent._DrGHUDMaxHealth or ent:GetMaxHealth()
+        if health > maxHealth and ent:GetMaxHealth() == 0 then ent._DrGHUDMaxHealth = health end
+        DrGHUD.DrawBar(x, y + ecart*1.5, long - ecart*5, larg/5, "HEALTH", health, maxHealth, healthColor, true)
         DrGHUD.DrawText(x, y + ecart*5.25, "DISTANCE "..math.Round(tr.StartPos:Distance(tr.HitPos)), "DrGHUDFont", DrGHUD.PickColor("main"))
       end
     end
@@ -558,7 +561,7 @@ if CLIENT then
 
     end
     -- radar
-    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() then
+    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() and not possessing then
       local radius = larg*1.25*DrGHUD.RadarScale:GetFloat()
       local rad3 = radius/3
       local x = scrWidth - distance - radius
@@ -570,7 +573,7 @@ if CLIENT then
       else pos = ply:GetPos() end
       local start
       if possessing then
-        start = DrGBase.Nextbot.Possessing(ply):EyePos()
+        start = DrGBase.Nextbot.Possessing(ply):EyePos_DrG()
       else start = EyePos() end
       local pos2D = Vector(pos.x, pos.y, 0)
       DrGHUD.DrawCircle(x, y, radius, nb, DrGHUD.PickColor("background"), nil, {blur = true})
@@ -783,10 +786,14 @@ else
 
   local radarRefreshDelay = 0
 
-  function DrGHUD.RefreshRadar()
-    for i, ply in ipairs(player.GetHumans()) do
+  function DrGHUD.RefreshRadar(ply)
+    if ply == nil then
+      for i, ply in ipairs(player.GetHumans()) do
+        DrGHUD.RefreshRadar(ply)
+      end
+    elseif IsValid(ply) then
       local data = {}
-      for h, ent in ipairs(ents.GetAll()) do
+      for i, ent in ipairs(ents.GetAll()) do
         if ent:EntIndex() == ply:EntIndex() then continue end
         local rel
         local hookres = hook.Run("DrGHUDEntityIcon", ent, ply)
@@ -811,12 +818,10 @@ else
             else rel = DRGHUD_NEUTRAL end
           elseif ent.Type == "nextbot" then
             rel = DRGHUD_ENEMY
-          elseif ent:GetClass() == "replicator_melon" then
-            rel = DRGHUD_ENEMY
           elseif ent:IsWeapon() and not IsValid(ent:GetOwner()) then
             rel = DRGHUD_WEAPON
-          --elseif ent:IsVehicle() and not IsValid(ent:GetDriver()) then
-            --rel = DRGHUD_VEHICLE
+          elseif ent:IsVehicle() and not IsValid(ent:GetDriver()) then
+            rel = DRGHUD_VEHICLE
           else rel = DRGHUD_IGNORE end
         end
         if rel == DRGHUD_IGNORE then continue end
@@ -853,6 +858,15 @@ else
     end
   end
 
+  hook.Add("DrGHUDEntityIcon", "DrGHUDEntityIconOverrides", function(ent)
+    local class = ent:GetClass()
+    if class == "replicator_melon" then return DRGHUD_ENEMY
+    elseif class == "replicator_queen" then return DRGHUD_ENEMY
+    elseif class == "replicator_queen_hive" then return DRGHUD_ENEMY
+    elseif class == "replicator_worker" then return DRGHUD_ENEMY
+    end
+  end)
+
   function DrGHUD.DefineMaterial(name, path, force)
     net.Start("DrGHUDDefineMaterial")
     net.WriteString(name)
@@ -882,7 +896,7 @@ else
   end
 
   hook.Add("Think", "DrGHUDThink", function()
-    if CurTime() > radarRefreshDelay + 1 then
+    if CurTime() > radarRefreshDelay + 0.1 then
       radarRefreshDelay = CurTime()
       DrGHUD.RefreshRadar()
     end
@@ -893,11 +907,11 @@ else
   end)
 
   hook.Add("PlayerEnteredVehicle", "DrGHUDPlayerEnteredVehicle", function()
-    --timer.Simple(0, DrGHUD.RefreshRadar)
+    timer.Simple(0, DrGHUD.RefreshRadar)
   end)
 
   hook.Add("PlayerLeaveVehicle", "DrGHUDPlayerLeaveVehicle", function()
-    --timer.Simple(0, DrGHUD.RefreshRadar)
+    timer.Simple(0, DrGHUD.RefreshRadar)
   end)
 
   hook.Add("EntityTakeDamage", "DrGHUDEntityTakeDamage", function(ent, dmg)
