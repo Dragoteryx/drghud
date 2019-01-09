@@ -6,15 +6,17 @@ DrGHUD.RadarRange = CreateConVar("drghud_radar_range", "500", {FCVAR_ARCHIVE, FC
 DrGHUD.RadarDeath = CreateConVar("drghud_radar_death", "-1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED})
 DrGHUD.CompassRotate = CreateConVar("drghud_compass_rotate", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED})
 
-DRGHUD_ICON_IGNORE = -1
-DRGHUD_ICON_NEUTRAL = 0
-DRGHUD_ICON_ALLY = 1
-DRGHUD_ICON_ENEMY = 2
-DRGHUD_ICON_WEAPON = 3
-DRGHUD_ICON_ITEM = 4
-DRGHUD_ICON_VEHICLE = 5
-DRGHUD_ICON_MATERIAL = 6
-DRGHUD_ICON_TEXT = 7
+DRGHUD_IGNORE = -1
+DRGHUD_NEUTRAL = 0
+DRGHUD_ALLY = 1
+DRGHUD_ENEMY = 2
+DRGHUD_WEAPON = 3
+DRGHUD_ITEM = 4
+DRGHUD_VEHICLE = 5
+
+DRGHUD_TYPE_DEFAULT = 0
+DRGHUD_TYPE_MATERIAL = 1
+DRGHUD_TYPE_TEXT = 2
 
 if CLIENT then
   local ply
@@ -98,13 +100,15 @@ if CLIENT then
 
   function DrGHUD.PickColor(name)
     local colors = {
-      [DRGHUD_ICON_IGNORE] = Color(0, 0, 0, 0),
-      [DRGHUD_ICON_NEUTRAL] = Color(200, 200, 200, 200),
-      [DRGHUD_ICON_ALLY] = Color(150, 255, 40, 200),
-      [DRGHUD_ICON_ENEMY] = Color(255, 50, 50, 200),
-      [DRGHUD_ICON_WEAPON] = Color(230, 100, 35, 200),
-      [DRGHUD_ICON_ITEM] = Color(220, 40, 115, 200),
-      [DRGHUD_ICON_VEHICLE] = Color(0, 200, 200, 200),
+      [DRGHUD_IGNORE] = Color(0, 0, 0, 0),
+      [DRGHUD_NEUTRAL] = Color(200, 200, 200, 200),
+      [DRGHUD_ALLY] = Color(150, 255, 40, 200),
+      [DRGHUD_ENEMY] = Color(255, 50, 50, 200),
+      [DRGHUD_WEAPON] = Color(230, 100, 35, 200),
+      [DRGHUD_ITEM] = Color(200, 200, 200, 200),
+      [DRGHUD_VEHICLE] = Color(230, 100, 35, 200),
+      ["white"] = Color(255, 255, 255, 200),
+      ["black"] = Color(0, 0, 0, 200),
       ["main"] = Color(200, 200, 200, 200),
       ["background"] = Color(0, 0, 0, 50),
       ["dark"] = Color(0, 0, 0, 125),
@@ -180,7 +184,7 @@ if CLIENT then
   function DrGHUD.DefineBeacon(name, pos, color)
     DrGHUD.RemoveBeacon(name)
     table.insert(beacons, {
-      type = DRGHUD_ICON_TEXT,
+      type = DRGHUD_TYPE_TEXT,
       text = name,
       pos = pos,
       color = color or DrGHUD.PickColor("main"),
@@ -229,15 +233,13 @@ if CLIENT then
   function DrGHUD.DrawPoly(points, color, border, options)
     options = options or {}
     draw.NoTexture()
-    if color then
-      if options.material then
-        surface.SetMaterial(color)
-        surface.SetDrawColor(Color(255, 255, 255, 200))
-        surface.DrawPoly(points)
-      else
-        surface.SetDrawColor(color)
-        surface.DrawPoly(points)
-      end
+    if options.material then
+      surface.SetDrawColor(color or DrGHUD.PickColor("white"))
+      surface.SetMaterial(options.material)
+      surface.DrawPoly(points)
+    elseif color then
+      surface.SetDrawColor(color)
+      surface.DrawPoly(points)
     end
     draw.NoTexture()
     if options.blur then
@@ -245,7 +247,7 @@ if CLIENT then
         point.u = point.x/scrWidth
         point.v = point.y/scrHeight
       end
-      surface.SetDrawColor(255, 255, 255)
+      surface.SetDrawColor(255, 255, 255, 255)
       surface.SetMaterial(blur)
       for i = 1, DrGHUD.Blur:GetInt() do
         blur:SetFloat("$blur", (i/3)*(25/DrGHUD.Blur:GetInt()))
@@ -277,8 +279,8 @@ if CLIENT then
     DrGHUD.DrawRect(x, y, length, length, color, border, options)
   end
 
-  function DrGHUD.DrawMaterial(x, y, length, material)
-    DrGHUD.DrawSquare(x, y, length, material, nil, {material = true})
+  function DrGHUD.DrawMaterial(x, y, length, material, color)
+    DrGHUD.DrawSquare(x, y, length, color, nil, {material = material})
   end
 
   function DrGHUD.DrawDiamond(x, y, size, color, border, options)
@@ -454,7 +456,7 @@ if CLIENT then
             if CurTime() < lastPoison then mat = poison_on
             else mat = poison_off end
           end
-          DrGHUD.DrawCircle(x + larg/6, y + (larg/3)*i - larg/6, larg/8, 6, mat, DrGHUD.PickColor("border"), {material = true})
+          DrGHUD.DrawCircle(x + larg/6, y + (larg/3)*i - larg/6, larg/8, 6, nil, DrGHUD.PickColor("border"), {material = mat})
         end
       end
     end
@@ -500,10 +502,10 @@ if CLIENT then
           break
         end
         local healthColor = DrGHUD.PickColor("main")
-        if entIcon.type == DRGHUD_ICON_ALLY then
-          healthColor = DrGHUD.PickColor(DRGHUD_ICON_ALLY)
-        elseif entIcon.type == DRGHUD_ICON_ENEMY then
-          healthColor = DrGHUD.PickColor(DRGHUD_ICON_ENEMY)
+        if entIcon.rel == DRGHUD_ALLY then
+          healthColor = DrGHUD.PickColor(DRGHUD_ALLY)
+        elseif entIcon.rel == DRGHUD_ENEMY then
+          healthColor = DrGHUD.PickColor(DRGHUD_ENEMY)
         end
         DrGHUD.DrawBar(x, y + ecart*1.5, long - ecart*5, larg/5, "HEALTH", ent:Health(), ent:GetMaxHealth(), healthColor, true)
         DrGHUD.DrawText(x, y + ecart*5.25, "DISTANCE "..math.Round(tr.StartPos:Distance(tr.HitPos)), "DrGHUDFont", DrGHUD.PickColor("main"))
@@ -556,14 +558,16 @@ if CLIENT then
 
     end
     -- radar
-    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() and not possessing then
+    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() then --
       local radius = larg*1.25*DrGHUD.RadarScale:GetFloat()
       local rad3 = radius/3
       local x = scrWidth - distance - radius
       local y = distance + radius
       local nb = 8
       local offset = -math.pi/2
-      local pos = ply:GetPos()
+      local pos
+      if possessing then pos = DrGBase.Nextbot.Possessing(ply):GetPos()
+      else pos = ply:GetPos() end
       local pos2D = Vector(pos.x, pos.y, 0)
       DrGHUD.DrawCircle(x, y, radius, nb, DrGHUD.PickColor("background"), nil, {blur = true})
       local points = DrGHUD.GetCirclePoints(x, y, radius, nb)
@@ -588,23 +592,26 @@ if CLIENT then
           else continue end
         else dist = pos2D:Distance(icon.pos2D) end
         local size = ecart/2
+        local start
+        if possessing then
+          start = DrGBase.Nextbot.Possessing(ply):EyePos()
+        else start = EyePos() end
         local tr = util.TraceLine({
-          start = ply:EyePos(),
+          start = start,
           endpos = icon.pos + Vector(0, 0, 10),
           collisiongroup = COLLISION_GROUP_IN_VEHICLE
         })
-        local eyesAng
-        if vehicle then
-          eyesAng = math.NormalizeAngle(ply:GetVehicle():GetAngles().y + ply:EyeAngles().y)
-        else eyesAng = ply:EyeAngles().y end
-        local ang = math.AngleDifference(eyesAng, tr.Normal:Angle().y)
+        local ang = math.AngleDifference(EyeAngles().y, tr.Normal:Angle().y)
         local theta = math.rad(ang)
         icon.x = (dist/DrGHUD.RadarRange:GetFloat())*radius*0.825*math.cos(theta + offset)
         icon.y = (dist/DrGHUD.RadarRange:GetFloat())*radius*0.825*math.sin(theta + offset)
-        if icon.type < DRGHUD_ICON_MATERIAL then
-          local color = DrGHUD.PickColor(icon.type)
-          if icon.type == DRGHUD_ICON_WEAPON or icon.type == DRGHUD_ICON_ITEM then
-            size = size/1.25 --
+        local color
+        if icon.color ~= nil then color = icon.color
+        elseif icon.rel ~= nil then color = DrGHUD.PickColor(icon.rel) end
+        if icon.type == DRGHUD_TYPE_DEFAULT then
+          if color == nil then continue end
+          if icon.rel == DRGHUD_WEAPON or icon.rel == DRGHUD_ITEM then
+            size = size/1.25
           end
           local heightdiff = pos.z - icon.pos.z
           if math.abs(ang) <= 45 and not tr.HitWorld then
@@ -624,13 +631,13 @@ if CLIENT then
               DrGHUD.DrawDiamond(x + icon.x, y + icon.y, size, nil, color)
             end
           end
-        elseif icon.type == DRGHUD_ICON_MATERIAL then
+        elseif icon.type == DRGHUD_TYPE_MATERIAL then
           size = size*3
-          DrGHUD.DrawMaterial(x + icon.x - size/2, y + icon.y - size/2, size, DrGHUD.PickMaterial(icon.material))
-        elseif icon.type == DRGHUD_ICON_TEXT then
+          DrGHUD.DrawMaterial(x + icon.x - size/2, y + icon.y - size/2, size, DrGHUD.PickMaterial(icon.material), color)
+        elseif icon.type == DRGHUD_TYPE_TEXT then
           surface.SetFont("DrGHUDFont")
           local width, height = surface.GetTextSize(icon.text)
-          DrGHUD.DrawText(x + icon.x - width/2, y + icon.y - height/2, icon.text, "DrGHUDFont", icon.color or DrGHUD.PickColor("main"))
+          DrGHUD.DrawText(x + icon.x - width/2, y + icon.y - height/2, icon.text, "DrGHUDFont", color or DrGHUD.PickColor("main"))
         end
       end
     end
@@ -717,13 +724,23 @@ if CLIENT then
   net.Receive("DrGHUDRadarRefresh", function(len)
     radar = util.JSONToTable(util.Decompress(net.ReadData(len/8)))
     if lastDeathPos ~= nil and (DrGHUD.RadarDeath:GetInt() < 0 or CurTime() < lastDeathTime + DrGHUD.RadarDeath:GetInt()) then
-      table.insert(radar, {type = DRGHUD_ICON_MATERIAL, pos = lastDeathPos, outside = true, material = "drghud_death"})
+      table.insert(radar, {
+        pos = lastDeathPos,
+        outside = true,
+        type = DRGHUD_TYPE_MATERIAL,
+        material = "drghud_death"
+      })
     end
     if DrGHUD.Compass:GetBool() then
       local lol = 999999999999
       local north = Vector(lol, 0, 0)
       north:Rotate(Angle(0, -DrGHUD.CompassRotate:GetFloat(), 0))
-      table.insert(radar, {type = DRGHUD_ICON_TEXT, pos = north, outside = true, text = "N"})
+      table.insert(radar, {
+        pos = north,
+        outside = true,
+        type = DRGHUD_TYPE_TEXT,
+        text = "N"
+      })
       if not DrGHUD.CompassNorthOnly:GetBool() then
         local south = Vector(-lol, 0, 0)
         local west = Vector(0, lol, 0)
@@ -731,9 +748,24 @@ if CLIENT then
         south:Rotate(Angle(0, -DrGHUD.CompassRotate:GetFloat(), 0))
         west:Rotate(Angle(0, -DrGHUD.CompassRotate:GetFloat(), 0))
         east:Rotate(Angle(0, -DrGHUD.CompassRotate:GetFloat(), 0))
-        table.insert(radar, {type = DRGHUD_ICON_TEXT, pos = south, outside = true, text = "S"})
-        table.insert(radar, {type = DRGHUD_ICON_TEXT, pos = west, outside = true, text = "W"})
-        table.insert(radar, {type = DRGHUD_ICON_TEXT, pos = east, outside = true, text = "E"})
+        table.insert(radar, {
+          pos = south,
+          outside = true,
+          type = DRGHUD_TYPE_TEXT,
+          text = "S"
+        })
+        table.insert(radar, {
+          pos = west,
+          outside = true,
+          type = DRGHUD_TYPE_TEXT,
+          text = "W"
+        })
+        table.insert(radar, {
+          pos = east,
+          outside = true,
+          type = DRGHUD_TYPE_TEXT,
+          text = "E"
+        })
       end
     end
     for i, beacon in ipairs(beacons) do
@@ -754,75 +786,65 @@ else
   function DrGHUD.RefreshRadar()
     for i, ply in ipairs(player.GetHumans()) do
       local data = {}
-      for i, ent in ipairs(ents.GetAll()) do
+      for h, ent in ipairs(ents.GetAll()) do
         if ent:EntIndex() == ply:EntIndex() then continue end
-        local type
-        local hookres = hook.Run("DrGHUDEntityIconType", ent, ply)
+        local rel
+        local hookres = hook.Run("DrGHUDEntityIcon", ent, ply)
         if hookres ~= nil then
-          type = hookres
+          rel = hookres
         else
           if ent:IsPlayer() then
             local plyTeam = ply:Team()
             local entTeam = ent:Team()
             if plyTeam == TEAM_CONNECTING or plyTeam == TEAM_UNASSIGNED or plyTeam == TEAM_SPECTATOR or
             entTeam == TEAM_CONNECTING or entTeam == TEAM_UNASSIGNED or entTeam == TEAM_SPECTATOR then
-              type = DRGHUD_ICON_NEUTRAL
+              rel = DRGHUD_NEUTRAL
             elseif plyTeam == entTeam then
-              type = DRGHUD_ICON_ALLY
-            else type = DRGHUD_ICON_ENEMY end
+              rel = DRGHUD_ALLY
+            else rel = DRGHUD_ENEMY end
           elseif ent:IsNPC() then
-            local rel = ent:Disposition(ply)
-            if rel == D_HT or rel == D_FR then
-              type = DRGHUD_ICON_ENEMY
-            elseif rel == D_LI then
-              type = DRGHUD_ICON_ALLY
-            else type = DRGHUD_ICON_NEUTRAL end
+            local disposition = ent:Disposition(ply)
+            if disposition == D_HT or disposition == D_FR then
+              rel = DRGHUD_ENEMY
+            elseif disposition == D_LI then
+              rel = DRGHUD_ALLY
+            else rel = DRGHUD_NEUTRAL end
           elseif ent.Type == "nextbot" then
-            type = DRGHUD_ICON_ENEMY
+            rel = DRGHUD_ENEMY
           elseif ent:GetClass() == "replicator_melon" then
-            type = DRGHUD_ICON_ENEMY
+            rel = DRGHUD_ENEMY
           elseif ent:IsWeapon() and not IsValid(ent:GetOwner()) then
-            type = DRGHUD_ICON_WEAPON
-          --[[elseif ent:IsVehicle() and not IsValid(ent:GetDriver()) then
-            type = DRGHUD_ICON_VEHICLE]]
-          else type = DRGHUD_ICON_IGNORE end
+            rel = DRGHUD_WEAPON
+          --elseif ent:IsVehicle() and not IsValid(ent:GetDriver()) then
+            --rel = DRGHUD_VEHICLE
+          else rel = DRGHUD_IGNORE end
         end
-        if type == DRGHUD_ICON_IGNORE then continue end
+        if rel == DRGHUD_IGNORE then continue end
+        local type = hook.Run("DrGHUDEntityIconType", ent, ply) or DRGHUD_TYPE_DEFAULT
+        --local color = hook.Run("DrGHUDEntityIconColor", ent, ply)
         local outside = hook.Run("DrGHUDEntityIconOutside", ent, ply)
         if outside then outside = true else outside = false end
-        if type == DRGHUD_ICON_MATERIAL then
+        local icon = {
+          entIndex = ent:EntIndex(),
+          pos = ent:GetPos(),
+          --color = color,
+          outside = outside,
+          rel = rel,
+          type = type,
+          pvs = ply:TestPVS(ent)
+        }
+        if type == DRGHUD_TYPE_MATERIAL then
           local material = hook.Run("DrGHUDEntityIconMaterial", ent, ply)
           if isstring(material) then
-            table.insert(data, {
-              entIndex = ent:EntIndex(),
-              pos = ent:GetPos(),
-              type = type,
-              material = material,
-              outside = outside,
-              pvs = ply:TestPVS(ent)
-            })
-          end
-        elseif type == DRGHUD_ICON_TEXT then
+            icon.material = material
+          else continue end
+        elseif type == DRGHUD_TYPE_TEXT then
           local text = hook.Run("DrGHUDEntityIconText", ent, ply)
           if isstring(text) then
-            table.insert(data, {
-              entIndex = ent:EntIndex(),
-              pos = ent:GetPos(),
-              type = type,
-              text = text,
-              outside = outside,
-              pvs = ply:TestPVS(ent)
-            })
-          end
-        else
-          table.insert(data, {
-            entIndex = ent:EntIndex(),
-            pos = ent:GetPos(),
-            type = type,
-            outside = outside,
-            pvs = ply:TestPVS(ent)
-          })
+            icon.text = text
+          else continue end
         end
+        table.insert(data, icon)
       end
       local compressed = util.Compress(util.TableToJSON(data))
       net.Start("DrGHUDRadarRefresh")
@@ -868,6 +890,14 @@ else
 
   hook.Add("OnEntityCreated", "DrGHUDOnEntityCreated", function()
     timer.Simple(0, DrGHUD.RefreshRadar)
+  end)
+
+  hook.Add("PlayerEnteredVehicle", "DrGHUDPlayerEnteredVehicle", function()
+    --timer.Simple(0, DrGHUD.RefreshRadar)
+  end)
+
+  hook.Add("PlayerLeaveVehicle", "DrGHUDPlayerLeaveVehicle", function()
+    --timer.Simple(0, DrGHUD.RefreshRadar)
   end)
 
   hook.Add("EntityTakeDamage", "DrGHUDEntityTakeDamage", function(ent, dmg)
