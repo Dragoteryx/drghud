@@ -591,7 +591,7 @@ if CLIENT then
         local tr = util.TraceLine({
           start = ply:EyePos(),
           endpos = icon.pos + Vector(0, 0, 10),
-          collisiongroup = COLLISION_GROUP_DEBRIS
+          collisiongroup = COLLISION_GROUP_IN_VEHICLE
         })
         local eyesAng
         if vehicle then
