@@ -379,8 +379,8 @@ if CLIENT then
     surface.SetFont(font)
     if options.maxlength ~= nil and surface.GetTextSize(text) > options.maxlength then return false end
     if outlinewidth ~= nil then
-      draw.SimpleTextOutlined(text, font, x, y, color, options.xAlign, options.yAlign, outlinewidth, outlinecolor or DrGHUD.PickColor("main"))
-    else draw.SimpleText(text, font, x, y, color, options.xAlign, options.yAlign) end
+      return draw.SimpleTextOutlined(text, font, x, y, color, options.xAlign, options.yAlign, outlinewidth, outlinecolor or DrGHUD.PickColor("main"))
+    else return draw.SimpleText(text, font, x, y, color, options.xAlign, options.yAlign) end
   end
 
   hook.Add("HUDPaint", "DrGHUDPaint", function()
@@ -593,9 +593,12 @@ if CLIENT then
           endpos = icon.pos + Vector(0, 0, 10),
           collisiongroup = COLLISION_GROUP_DEBRIS
         })
-        local ang = tr.Normal:Angle().y
-        local anglediff = math.AngleDifference(ply:EyeAngles().y, ang)
-        local theta = math.rad(anglediff)
+        local eyesAng
+        if vehicle then
+          eyesAng = math.NormalizeAngle(ply:GetVehicle():GetAngles().y + ply:EyeAngles().y)
+        else eyesAng = ply:EyeAngles().y end
+        local ang = math.AngleDifference(eyesAng, tr.Normal:Angle().y)
+        local theta = math.rad(ang)
         icon.x = (dist/DrGHUD.RadarRange:GetFloat())*radius*0.825*math.cos(theta + offset)
         icon.y = (dist/DrGHUD.RadarRange:GetFloat())*radius*0.825*math.sin(theta + offset)
         if icon.type < DRGHUD_ICON_MATERIAL then
@@ -604,7 +607,7 @@ if CLIENT then
             size = size/1.25 --
           end
           local heightdiff = pos.z - icon.pos.z
-          if math.abs(anglediff) <= 45 and not tr.HitWorld then
+          if math.abs(ang) <= 45 and not tr.HitWorld then
             if heightdiff > 100 then
               DrGHUD.DrawTriangle(x + icon.x, y + icon.y, size, color)
             elseif heightdiff < -100 then
