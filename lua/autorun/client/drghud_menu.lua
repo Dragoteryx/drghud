@@ -29,10 +29,79 @@ hook.Add("PopulateToolMenu", "DrGHUDPopulateToolMenu", function()
      panel:NumSlider("Radar scale", "drghud_radar_scale", 0.1, 3, 1)
      panel:CheckBox("Enable compass", "drghud_compass")
      panel:CheckBox("North only", "drghud_compass_north_only")
+		 panel:ControlHelp("\nColors")
+		 panel:AddControl("color", {
+			label = "Main color",
+			red = "drghud_main_r",
+			green = "drghud_main_g",
+			blue = "drghud_main_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Health color (high)",
+			red = "drghud_health_r",
+			green = "drghud_health_g",
+			blue = "drghud_health_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Health color (low)",
+			red = "drghud_damage_r",
+			green = "drghud_damage_g",
+			blue = "drghud_damage_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Armor color",
+			red = "drghud_armor_r",
+			green = "drghud_armor_g",
+			blue = "drghud_armor_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Primary ammo color",
+			red = "drghud_ammo_r",
+			green = "drghud_ammo_g",
+			blue = "drghud_ammo_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Secondary ammo color",
+			red = "drghud_secammo_r",
+			green = "drghud_secammo_g",
+			blue = "drghud_secammo_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Neutral entities",
+			red = "drghud_radar_neutral_r",
+			green = "drghud_radar_neutral_g",
+			blue = "drghud_radar_neutral_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Allied entities",
+			red = "drghud_radar_ally_r",
+			green = "drghud_radar_ally_g",
+			blue = "drghud_radar_ally_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Enemy entities",
+			red = "drghud_radar_enemy_r",
+			green = "drghud_radar_enemy_g",
+			blue = "drghud_radar_enemy_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Weapon entities",
+			red = "drghud_radar_weapon_r",
+			green = "drghud_radar_weapon_g",
+			blue = "drghud_radar_weapon_b"
+	   })
+		 panel:AddControl("color", {
+			label = "Vehicle entities",
+			red = "drghud_radar_vehicle_r",
+			green = "drghud_radar_vehicle_g",
+			blue = "drghud_radar_vehicle_b"
+	   })
   end)
   spawnmenu.AddToolMenuOption("Options", "DrGHUD", "DrGHUDCrosshair", "Crosshair", "", "", function(panel)
 	   panel:ClearControls()
+		 panel:ControlHelp("\nMisc\n")
      panel:CheckBox("Enable crosshair", "drghud_crosshair")
+		 panel:CheckBox("Color change", "drghud_crosshair_color_change")
      panel:ControlHelp("\nCenter\n")
      panel:CheckBox("Center point", "drghud_crosshair_center")
      panel:NumSlider("Point size", "drghud_crosshair_center_size", 0.1, 10, 1)

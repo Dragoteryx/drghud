@@ -40,6 +40,7 @@ if CLIENT then
   DrGHUD.CompassNorthOnly = CreateClientConVar("drghud_compass_north_only", "0")
 
   DrGHUD.Crosshair = CreateClientConVar("drghud_crosshair", "1")
+  DrGHUD.CrosshairColorChange = CreateClientConVar("drghud_crosshair_color_change", "1")
   DrGHUD.CrosshairCenter = CreateClientConVar("drghud_crosshair_center", "1")
   DrGHUD.CrosshairCenterSize = CreateClientConVar("drghud_crosshair_center_size", "1")
   DrGHUD.CrosshairCenterFull = CreateClientConVar("drghud_crosshair_center_full", "1")
@@ -56,6 +57,50 @@ if CLIENT then
   DrGHUD.CrosshairSidesG = CreateClientConVar("drghud_crosshair_sides_g", "200")
   DrGHUD.CrosshairSidesB = CreateClientConVar("drghud_crosshair_sides_b", "200")
   DrGHUD.CrosshairSidesA = CreateClientConVar("drghud_crosshair_sides_a", "200")
+
+  DrGHUD.MainColorR = CreateClientConVar("drghud_main_r", "200")
+  DrGHUD.MainColorG = CreateClientConVar("drghud_main_g", "200")
+  DrGHUD.MainColorB = CreateClientConVar("drghud_main_b", "200")
+
+  DrGHUD.HealthR = CreateClientConVar("drghud_health_r", "150")
+  DrGHUD.HealthG = CreateClientConVar("drghud_health_g", "255")
+  DrGHUD.HealthB = CreateClientConVar("drghud_health_b", "40")
+
+  DrGHUD.DamageR = CreateClientConVar("drghud_damage_r", "255")
+  DrGHUD.DamageG = CreateClientConVar("drghud_damage_g", "50")
+  DrGHUD.DamageB = CreateClientConVar("drghud_damage_b", "50")
+
+  DrGHUD.ArmorR = CreateClientConVar("drghud_armor_r", "230")
+  DrGHUD.ArmorG = CreateClientConVar("drghud_armor_g", "100")
+  DrGHUD.ArmorB = CreateClientConVar("drghud_armor_b", "35")
+
+  DrGHUD.AmmoR = CreateClientConVar("drghud_ammo_r", "200")
+  DrGHUD.AmmoG = CreateClientConVar("drghud_ammo_g", "200")
+  DrGHUD.AmmoB = CreateClientConVar("drghud_ammo_b", "200")
+
+  DrGHUD.SecAmmoR = CreateClientConVar("drghud_secammo_r", "230")
+  DrGHUD.SecAmmoG = CreateClientConVar("drghud_secammo_g", "100")
+  DrGHUD.SecAmmoB = CreateClientConVar("drghud_secammo_b", "35")
+
+  DrGHUD.RadarNeutralR = CreateClientConVar("drghud_radar_neutral_r", "200")
+  DrGHUD.RadarNeutralG = CreateClientConVar("drghud_radar_neutral_g", "200")
+  DrGHUD.RadarNeutralB = CreateClientConVar("drghud_radar_neutral_b", "200")
+
+  DrGHUD.RadarAllyR = CreateClientConVar("drghud_radar_ally_r", "150")
+  DrGHUD.RadarAllyG = CreateClientConVar("drghud_radar_ally_g", "255")
+  DrGHUD.RadarAllyB = CreateClientConVar("drghud_radar_ally_b", "40")
+
+  DrGHUD.RadarEnemyR = CreateClientConVar("drghud_radar_enemy_r", "255")
+  DrGHUD.RadarEnemyG = CreateClientConVar("drghud_radar_enemy_g", "50")
+  DrGHUD.RadarEnemyB = CreateClientConVar("drghud_radar_enemy_b", "50")
+
+  DrGHUD.RadarWeaponR = CreateClientConVar("drghud_radar_weapon_r", "230")
+  DrGHUD.RadarWeaponG = CreateClientConVar("drghud_radar_weapon_g", "100")
+  DrGHUD.RadarWeaponB = CreateClientConVar("drghud_radar_weapon_b", "35")
+
+  DrGHUD.RadarVehicleR = CreateClientConVar("drghud_radar_vehicle_r", "230")
+  DrGHUD.RadarVehicleG = CreateClientConVar("drghud_radar_vehicle_g", "100")
+  DrGHUD.RadarVehicleB = CreateClientConVar("drghud_radar_vehicle_b", "35")
 
   -- globals
   local radar = {}
@@ -98,44 +143,8 @@ if CLIENT then
     })
   end
 
-  function DrGHUD.PickColor(name)
-    local colors = {
-      [DRGHUD_IGNORE] = Color(0, 0, 0, 0),
-      [DRGHUD_NEUTRAL] = Color(200, 200, 200, 200),
-      [DRGHUD_ALLY] = Color(150, 255, 40, 200),
-      [DRGHUD_ENEMY] = Color(255, 50, 50, 200),
-      [DRGHUD_WEAPON] = Color(230, 100, 35, 200),
-      [DRGHUD_ITEM] = Color(200, 200, 200, 200),
-      [DRGHUD_VEHICLE] = Color(230, 100, 35, 200),
-      ["white"] = Color(255, 255, 255, 200),
-      ["black"] = Color(0, 0, 0, 200),
-      ["main"] = Color(200, 200, 200, 200),
-      ["background"] = Color(0, 0, 0, 50),
-      ["dark"] = Color(0, 0, 0, 125),
-      ["border"] = Color(100, 100, 100, 25),
-      ["health"] = Color(150, 255, 40, 200),
-      ["damage"] = Color(255, 50, 50, 200),
-      ["armor"] = Color(230, 100, 35, 200),
-      ["ammo"] = Color(200, 200, 200, 200),
-      ["secammo"] = Color(230, 100, 35, 200),
-      ["crosshairCenter"] = Color(
-        DrGHUD.CrosshairCenterR:GetInt(),
-        DrGHUD.CrosshairCenterG:GetInt(),
-        DrGHUD.CrosshairCenterB:GetInt(),
-        DrGHUD.CrosshairCenterA:GetInt()
-      ),
-      ["crosshairSides"] = Color(
-        DrGHUD.CrosshairSidesR:GetInt(),
-        DrGHUD.CrosshairSidesG:GetInt(),
-        DrGHUD.CrosshairSidesB:GetInt(),
-        DrGHUD.CrosshairSidesA:GetInt()
-      )
-    }
-    return colors[name]
-  end
-
   -- materials
-  local materials = materials or {
+  local materials = {
     ["drghud_death"] = Material("drghud/death.png")
   }
   local blur = Material("pp/blurscreen")
@@ -153,6 +162,11 @@ if CLIENT then
   end
   function DrGHUD.PickMaterial(name)
     return materials[name]
+  end
+
+  local colors = {}
+  function DrGHUD.PickColor(name)
+    return colors[name]
   end
 
   local names = {
@@ -211,6 +225,92 @@ if CLIENT then
     if IsValid(LocalPlayer()) and not ply then
       ply = LocalPlayer()
     end
+    colors = {
+      [DRGHUD_IGNORE] = Color(0, 0, 0, 0),
+      ["white"] = Color(255, 255, 255, 200),
+      ["background"] = Color(0, 0, 0, 50),
+      ["dark"] = Color(0, 0, 0, 125),
+      ["border"] = Color(100, 100, 100, 25),
+      ["main"] = Color(
+        DrGHUD.MainColorR:GetInt(),
+        DrGHUD.MainColorG:GetInt(),
+        DrGHUD.MainColorB:GetInt(),
+        200
+      ),
+      ["health"] = Color(
+        DrGHUD.HealthR:GetInt(),
+        DrGHUD.HealthG:GetInt(),
+        DrGHUD.HealthB:GetInt(),
+        200
+      ),
+      ["damage"] = Color(
+        DrGHUD.DamageR:GetInt(),
+        DrGHUD.DamageG:GetInt(),
+        DrGHUD.DamageB:GetInt(),
+        200
+      ),
+      ["armor"] = Color(
+        DrGHUD.ArmorR:GetInt(),
+        DrGHUD.ArmorG:GetInt(),
+        DrGHUD.ArmorB:GetInt(),
+        200
+      ),
+      ["ammo"] = Color(
+        DrGHUD.AmmoR:GetInt(),
+        DrGHUD.AmmoG:GetInt(),
+        DrGHUD.AmmoB:GetInt(),
+        200
+      ),
+      ["secammo"] = Color(
+        DrGHUD.SecAmmoR:GetInt(),
+        DrGHUD.SecAmmoG:GetInt(),
+        DrGHUD.SecAmmoB:GetInt(),
+        200
+      ),
+      ["crosshairCenter"] = Color(
+        DrGHUD.CrosshairCenterR:GetInt(),
+        DrGHUD.CrosshairCenterG:GetInt(),
+        DrGHUD.CrosshairCenterB:GetInt(),
+        DrGHUD.CrosshairCenterA:GetInt()
+      ),
+      ["crosshairSides"] = Color(
+        DrGHUD.CrosshairSidesR:GetInt(),
+        DrGHUD.CrosshairSidesG:GetInt(),
+        DrGHUD.CrosshairSidesB:GetInt(),
+        DrGHUD.CrosshairSidesA:GetInt()
+      ),
+      [DRGHUD_NEUTRAL] = Color(
+        DrGHUD.RadarNeutralR:GetInt(),
+        DrGHUD.RadarNeutralG:GetInt(),
+        DrGHUD.RadarNeutralB:GetInt(),
+        200
+      ),
+      [DRGHUD_ALLY] = Color(
+        DrGHUD.RadarAllyR:GetInt(),
+        DrGHUD.RadarAllyG:GetInt(),
+        DrGHUD.RadarAllyB:GetInt(),
+        200
+      ),
+      [DRGHUD_ENEMY] = Color(
+        DrGHUD.RadarEnemyR:GetInt(),
+        DrGHUD.RadarEnemyG:GetInt(),
+        DrGHUD.RadarEnemyB:GetInt(),
+        200
+      ),
+      [DRGHUD_WEAPON] = Color(
+        DrGHUD.RadarWeaponR:GetInt(),
+        DrGHUD.RadarWeaponG:GetInt(),
+        DrGHUD.RadarWeaponB:GetInt(),
+        200
+      ),
+      [DRGHUD_VEHICLE] = Color(
+        DrGHUD.RadarVehicleR:GetInt(),
+        DrGHUD.RadarVehicleG:GetInt(),
+        DrGHUD.RadarVehicleB:GetInt(),
+        200
+      ),
+      [DRGHUD_ITEM] = Color(200, 200, 200, 200)
+    }
   end)
 
   function DrGHUD.GetCirclePoints(x, y, radius, nb, offset)
@@ -389,26 +489,45 @@ if CLIENT then
     if scrHeight == nil or scrWidth == nil then return end
     if not DrGHUD.Enable:GetBool() or not GetConVar("cl_drawhud"):GetBool() then return end
     if not IsValid(ply) or not ply:Alive() then return end
+    local tr = ply:GetEyeTraceNoCursor()
+    local ent
+    local entIcon = {}
+    if IsValid(tr.Entity) then
+      ent = tr.Entity
+      for i, icon in ipairs(radar) do
+        if icon.entIndex ~= ent:EntIndex() then continue end
+        entIcon = icon
+        break
+      end
+    end
     local possessing = DrGBase ~= nil and IsValid(DrGBase.Nextbot.Possessing(ply))
     local vehicle = ply:InVehicle()
     -- crosshair
     if DrGHUD.Crosshair:GetBool() and GetConVar("crosshair"):GetBool() and not ply:InVehicle() and not possessing then
       local x = scrWidth/2
       local y = scrHeight/2
+      local color
+      if IsValid(ent) and DrGHUD.CrosshairColorChange:GetBool() then
+        if entIcon.rel == DRGHUD_ALLY then
+          color = DrGHUD.PickColor(DRGHUD_ALLY)
+        elseif entIcon.rel == DRGHUD_ENEMY then
+          color = DrGHUD.PickColor(DRGHUD_ENEMY)
+        end
+      end
       if DrGHUD.CrosshairCenter:GetBool() then
         if DrGHUD.CrosshairCenterFull:GetBool() then
-          DrGHUD.DrawCircle(x, y, ep/2*DrGHUD.CrosshairCenterSize:GetFloat(), 8, DrGHUD.PickColor("crosshairCenter"), DrGHUD.PickColor("crosshairCenter"))
+          DrGHUD.DrawCircle(x, y, ep/2*DrGHUD.CrosshairCenterSize:GetFloat(), 8, color or DrGHUD.PickColor("crosshairCenter"), color or DrGHUD.PickColor("crosshairCenter"))
         else
-          DrGHUD.DrawCircle(x, y, ep/2*DrGHUD.CrosshairCenterSize:GetFloat(), 8, nil, DrGHUD.PickColor("crosshairCenter"))
+          DrGHUD.DrawCircle(x, y, ep/2*DrGHUD.CrosshairCenterSize:GetFloat(), 8, nil, color or DrGHUD.PickColor("crosshairCenter"))
         end
       end
       if DrGHUD.CrosshairSides:GetInt() > 0 then
         local points = DrGHUD.GetCirclePoints(x, y, ep*DrGHUD.CrosshairSidesDistance:GetFloat()*1.5, DrGHUD.CrosshairSides:GetInt(), DrGHUD.CrosshairSidesOffset:GetFloat() - 90)
         for i, point in ipairs(points) do
           if DrGHUD.CrosshairSidesFull:GetBool() then
-            DrGHUD.DrawCircle(point.x, point.y, ep/2*DrGHUD.CrosshairSidesSize:GetFloat(), 8, DrGHUD.PickColor("crosshairSides"), DrGHUD.PickColor("crosshairSides"))
+            DrGHUD.DrawCircle(point.x, point.y, ep/2*DrGHUD.CrosshairSidesSize:GetFloat(), 8, color or DrGHUD.PickColor("crosshairSides"), color or DrGHUD.PickColor("crosshairSides"))
           else
-            DrGHUD.DrawCircle(point.x, point.y, ep/2*DrGHUD.CrosshairSidesSize:GetFloat(), 8, nil, DrGHUD.PickColor("crosshairSides"))
+            DrGHUD.DrawCircle(point.x, point.y, ep/2*DrGHUD.CrosshairSidesSize:GetFloat(), 8, nil, color or DrGHUD.PickColor("crosshairSides"))
           end
         end
       end
@@ -486,21 +605,13 @@ if CLIENT then
     -- entity info
     if not vehicle and not possessing and
     DrGHUD.AllowEntityInfo:GetBool() and DrGHUD.EntityInfo:GetBool() then
-      local tr = ply:GetEyeTrace()
-      if not tr.HitWorld and IsValid(tr.Entity) then
+      if IsValid(ent) then
         local x = distance
         local y
         if not DrGHUD.Status:GetBool() and DrGHUD.Info:GetBool() then
           y = distance + larg/3 + ecart
         else y = distance end
-        local ent = tr.Entity
         DrGHUD.DrawText(x, y, "CLASS "..ent:GetClass().." ("..ent:EntIndex()..")", "DrGHUDFont", DrGHUD.PickColor("main"))
-        local entIcon = {}
-        for i, icon in ipairs(radar) do
-          if icon.entIndex ~= ent:EntIndex() then continue end
-          entIcon = icon
-          break
-        end
         local healthColor = DrGHUD.PickColor("main")
         if entIcon.rel == DRGHUD_ALLY then
           healthColor = DrGHUD.PickColor(DRGHUD_ALLY)
@@ -558,23 +669,23 @@ if CLIENT then
     end
     -- vehicle
     if vehicle and DrGHUD.Vehicle:GetBool() then
-
+      local x = scrWidth - distance
+      local y = scrHeight - distance
+      local points = {{x = x, y = y}}
+      for i, point in ipairs(DrGHUD.GetCirclePoints(x, y, long*1.25, 16)) do
+        if i >= 9 and i <= 13 then table.insert(points, point) end
+      end
+      DrGHUD.DrawPoly(points, nil, DrGHUD.PickColor("border"), {blur = true})
     end
     -- radar
-    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() and not possessing then
+    if DrGHUD.AllowRadar:GetBool() and DrGHUD.Radar:GetBool() then
       local radius = larg*1.25*DrGHUD.RadarScale:GetFloat()
       local rad3 = radius/3
       local x = scrWidth - distance - radius
       local y = distance + radius
       local nb = 8
       local offset = -math.pi/2
-      local pos
-      if possessing then pos = DrGBase.Nextbot.Possessing(ply):GetPos()
-      else pos = ply:GetPos() end
-      local start
-      if possessing then
-        start = DrGBase.Nextbot.Possessing(ply):EyePos_DrG()
-      else start = EyePos() end
+      local pos = EyePos()
       local pos2D = Vector(pos.x, pos.y, 0)
       DrGHUD.DrawCircle(x, y, radius, nb, DrGHUD.PickColor("background"), nil, {blur = true})
       local points = DrGHUD.GetCirclePoints(x, y, radius, nb)
@@ -585,7 +696,6 @@ if CLIENT then
       DrGHUD.DrawCircle(x, y, radius, nb, nil, DrGHUD.PickColor("border"))
       DrGHUD.DrawCircle(x, y, rad3*2, nb, nil, DrGHUD.PickColor("border"))
       DrGHUD.DrawCircle(x, y, rad3, nb, nil, DrGHUD.PickColor("border"))
-      DrGHUD.DrawCircle(x, y, ecart/2, 4, DrGHUD.PickColor("main"))
       for i, icon in ipairs(radar) do
         if icon.entIndex ~= nil then
           local ent = Entity(icon.entIndex)
@@ -600,7 +710,7 @@ if CLIENT then
         else dist = pos2D:Distance(icon.pos2D) end
         local size = ecart/2
         local tr = util.TraceLine({
-          start = start,
+          start = pos,
           endpos = icon.pos + Vector(0, 0, 10),
           collisiongroup = COLLISION_GROUP_IN_VEHICLE
         })
@@ -617,18 +727,21 @@ if CLIENT then
             size = size/1.25
           end
           local heightdiff = pos.z - icon.pos.z
-          if math.abs(ang) <= 45 and not tr.HitWorld then
-            if heightdiff > 100 then
+          if (not possessing and ply:EntIndex() == icon.entIndex) or
+          (possessing and DrGBase.Nextbot.Possessing(ply):EntIndex() == icon.entIndex) then
+            DrGHUD.DrawDiamond(x, y, size, color)
+          elseif math.abs(ang) <= 45 and not tr.HitWorld then
+            if heightdiff > 200 then
               DrGHUD.DrawTriangle(x + icon.x, y + icon.y, size, color)
-            elseif heightdiff < -100 then
+            elseif heightdiff < -200 then
               DrGHUD.DrawTriangle(x + icon.x, y + icon.y, size, color, nil, {offset = 180})
             else
               DrGHUD.DrawDiamond(x + icon.x, y + icon.y, size, color)
             end
           else
-            if heightdiff > 100 then
+            if heightdiff > 200 then
               DrGHUD.DrawTriangle(x + icon.x, y + icon.y, size, nil, color)
-            elseif heightdiff < -100 then
+            elseif heightdiff < -200 then
               DrGHUD.DrawTriangle(x + icon.x, y + icon.y, size, nil, color, {offset = 180})
             else
               DrGHUD.DrawDiamond(x + icon.x, y + icon.y, size, nil, color)
@@ -731,7 +844,8 @@ if CLIENT then
         pos = lastDeathPos,
         outside = true,
         type = DRGHUD_TYPE_MATERIAL,
-        material = "drghud_death"
+        material = "drghud_death",
+        color = DrGHUD.PickColor("main")
       })
     end
     if DrGHUD.Compass:GetBool() then
@@ -794,13 +908,14 @@ else
     elseif IsValid(ply) then
       local data = {}
       for i, ent in ipairs(ents.GetAll()) do
-        if ent:EntIndex() == ply:EntIndex() then continue end
         local rel
-        local hookres = hook.Run("DrGHUDEntityIcon", ent, ply)
+        local hookres = hook.Run("DrGHUD/EntityIcon", ent, ply)
         if hookres ~= nil then
           rel = hookres
         else
-          if ent:IsPlayer() then
+          if ply:EntIndex() == ent:EntIndex() then
+            rel = DRGHUD_NEUTRAL
+          elseif ent:IsPlayer() then
             local plyTeam = ply:Team()
             local entTeam = ent:Team()
             if plyTeam == TEAM_CONNECTING or plyTeam == TEAM_UNASSIGNED or plyTeam == TEAM_SPECTATOR or
@@ -825,9 +940,9 @@ else
           else rel = DRGHUD_IGNORE end
         end
         if rel == DRGHUD_IGNORE then continue end
-        local type = hook.Run("DrGHUDEntityIconType", ent, ply)
-        --local color = hook.Run("DrGHUDEntityIconColor", ent, ply)
-        local outside = hook.Run("DrGHUDEntityIconOutside", ent, ply)
+        local type = hook.Run("DrGHUD/EntityIconType", ent, ply)
+        --local color = hook.Run("DrGHUD/EntityIconColor", ent, ply)
+        local outside = hook.Run("DrGHUD/EntityIconOutside", ent, ply)
         if outside then outside = true else outside = false end
         local icon = {
           entIndex = ent:EntIndex(),
@@ -839,12 +954,12 @@ else
           pvs = ply:TestPVS(ent)
         }
         if type == DRGHUD_TYPE_MATERIAL then
-          local material = hook.Run("DrGHUDEntityIconMaterial", ent, ply)
+          local material = hook.Run("DrGHUD/EntityIconMaterial", ent, ply)
           if isstring(material) then
             icon.material = material
           else continue end
         elseif type == DRGHUD_TYPE_TEXT then
-          local text = hook.Run("DrGHUDEntityIconText", ent, ply)
+          local text = hook.Run("DrGHUD/EntityIconText", ent, ply)
           if isstring(text) then
             icon.text = text
           else continue end
@@ -858,7 +973,7 @@ else
     end
   end
 
-  hook.Add("DrGHUDEntityIcon", "DrGHUDEntityIconOverrides", function(ent)
+  hook.Add("DrGHUD/EntityIcon", "DrGHUDEntityIconOverrides", function(ent)
     local class = ent:GetClass()
     if class == "replicator_melon" then return DRGHUD_ENEMY
     elseif class == "replicator_queen" then return DRGHUD_ENEMY
@@ -917,13 +1032,14 @@ else
   hook.Add("EntityTakeDamage", "DrGHUDEntityTakeDamage", function(ent, dmg)
     if not IsValid(ent) then return end
     if dmg:GetDamage() <= 0 then return end
-    if ent:IsPlayer() or (ent:IsDrGBaseNextbot() and ent:IsPossessed()) then
+    if ent:IsPlayer() or (DrGBase ~= nil and ent:IsDrGNextbot() and ent:IsPossessed()) then
       local types = dmg:GetDamageType()
       net.Start("DrGHUDDamage")
       net.WriteBool(types ~= nil)
       if types ~= nil then net.WriteInt(types, 32) end
       if ent:IsPlayer() then net.Send(ent)
       else net.Send(ent:GetPossessor()) end
+      net.Send(ent)
     end
   end)
 
