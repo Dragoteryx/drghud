@@ -1032,7 +1032,7 @@ else
   hook.Add("EntityTakeDamage", "DrGHUDEntityTakeDamage", function(ent, dmg)
     if not IsValid(ent) then return end
     if dmg:GetDamage() <= 0 then return end
-    if ent:IsPlayer() or (DrGBase ~= nil and ent:IsDrGNextbot() and ent:IsPossessed()) then
+    if ent:IsPlayer() then --or (DrGBase ~= nil and ent:IsDrGNextbot() and ent:IsPossessed()) then
       local types = dmg:GetDamageType()
       net.Start("DrGHUDDamage")
       net.WriteBool(types ~= nil)
