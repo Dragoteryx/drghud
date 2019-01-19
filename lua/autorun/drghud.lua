@@ -196,21 +196,16 @@ if CLIENT then
   -- beacons
   local beacons = {}
   function DrGHUD.DefineBeacon(name, pos, color)
-    DrGHUD.RemoveBeacon(name)
-    table.insert(beacons, {
+    beacons[name] = {
       type = DRGHUD_TYPE_TEXT,
       text = name,
       pos = pos,
       color = color or DrGHUD.PickColor("main"),
       outside = true
-    })
+    }
   end
   function DrGHUD.RemoveBeacon(name)
-    local beacons2 = {}
-    for i, beacon in ipairs(beacons) do
-      if beacon.text ~= name then table.insert(beacons2, beacon) end
-    end
-    beacons = beacons2
+    beacons[name] = nil
   end
 
   hook.Add("Think", "DrGHUDThink", function()
@@ -500,7 +495,7 @@ if CLIENT then
         break
       end
     end
-    local possessing = DrGBase ~= nil and IsValid(DrGBase.Nextbot.Possessing(ply))
+    local possessing = DrGBase ~= nil and IsValid(ply:DrG_Possessing())
     local vehicle = ply:InVehicle()
     -- crosshair
     if DrGHUD.Crosshair:GetBool() and GetConVar("crosshair"):GetBool() and not ply:InVehicle() and not possessing then
@@ -540,8 +535,8 @@ if CLIENT then
       local health = ply:Health()
       local maxhealth = ply:GetMaxHealth()
       if possessing then
-        health = DrGBase.Nextbot.Possessing(ply):Health()
-        maxhealth = DrGBase.Nextbot.Possessing(ply):GetMaxHealth()
+        health = ply:DrG_Possessing():Health()
+        maxhealth = ply:DrG_Possessing():GetMaxHealth()
       else DrGHUD.DrawBar(x + ecart*1.25, y + larg/2, long - ecart*2, larg/5, "SUIT", ply:Armor(), 100, DrGHUD.PickColor("armor")) end
       local healthcolor = DrGHUD.PickColor("damage")
       if CurTime() >= lastDamage then
@@ -598,7 +593,7 @@ if CLIENT then
       if ply:InVehicle() then
         speed = ply:GetVehicle():GetVelocity():Length()
       elseif possessing then
-        speed = DrGBase.Nextbot.Possessing(ply):GetVelocity():Length()
+        speed = ply:DrG_Possessing():GetVelocity():Length()
       else speed = ply:GetVelocity():Length() end
       DrGHUD.DrawText(x + ecart, y + ecart, "SPEED "..math.Round(speed).."  |  PING "..math.Round(ping).."  |  FPS "..math.Round(fps), "DrGHUDFont", DrGHUD.PickColor("main"))
     end
@@ -728,7 +723,7 @@ if CLIENT then
           end
           local heightdiff = pos.z - icon.pos.z
           if (not possessing and ply:EntIndex() == icon.entIndex) or
-          (possessing and DrGBase.Nextbot.Possessing(ply):EntIndex() == icon.entIndex) then
+          (possessing and ply:DrG_Possessing():EntIndex() == icon.entIndex) then
             DrGHUD.DrawDiamond(x, y, size, color)
           elseif math.abs(ang) <= 45 and not tr.HitWorld then
             if heightdiff > 200 then
@@ -885,7 +880,7 @@ if CLIENT then
         })
       end
     end
-    for i, beacon in ipairs(beacons) do
+    for name, beacon in pairs(beacons) do
       table.insert(radar, beacon)
     end
   end)
@@ -924,7 +919,7 @@ else
             elseif plyTeam == entTeam then
               rel = DRGHUD_ALLY
             else rel = DRGHUD_ENEMY end
-          elseif ent:IsNPC() then
+          elseif ent:IsNPC() or ent.IsDrGNextbot then
             local disposition = ent:Disposition(ply)
             if disposition == D_HT or disposition == D_FR then
               rel = DRGHUD_ENEMY
@@ -932,6 +927,8 @@ else
               rel = DRGHUD_ALLY
             else rel = DRGHUD_NEUTRAL end
           elseif ent.Type == "nextbot" then
+            rel = DRGHUD_ENEMY
+          elseif ent:IsFlagSet(FL_OBJECT) then
             rel = DRGHUD_ENEMY
           elseif ent:IsWeapon() and not IsValid(ent:GetOwner()) then
             rel = DRGHUD_WEAPON
@@ -1032,7 +1029,7 @@ else
   hook.Add("EntityTakeDamage", "DrGHUDEntityTakeDamage", function(ent, dmg)
     if not IsValid(ent) then return end
     if dmg:GetDamage() <= 0 then return end
-    if ent:IsPlayer() then --or (DrGBase ~= nil and ent:IsDrGNextbot() and ent:IsPossessed()) then
+    if ent:IsPlayer() or (ent.IsDrGNextbot and ent:IsPossessed()) then
       local types = dmg:GetDamageType()
       net.Start("DrGHUDDamage")
       net.WriteBool(types ~= nil)
