@@ -535,7 +535,7 @@ if CLIENT then
       local health = ply:Health()
       local maxhealth = ply:GetMaxHealth()
       if possessing then
-        health = ply:DrG_Possessing():Health()
+        health = ply:DrG_Possessing():HealthNetworked()
         maxhealth = ply:DrG_Possessing():GetMaxHealth()
       else DrGHUD.DrawBar(x + ecart*1.25, y + larg/2, long - ecart*2, larg/5, "SUIT", ply:Armor(), 100, DrGHUD.PickColor("armor")) end
       local healthcolor = DrGHUD.PickColor("damage")
@@ -613,7 +613,9 @@ if CLIENT then
         elseif entIcon.rel == DRGHUD_ENEMY then
           healthColor = DrGHUD.PickColor(DRGHUD_ENEMY)
         end
-        local health = ent:Health()
+        local health
+        if ent.IsDrGNextbot then health = ent:HealthNetworked()
+        else health = ent:Health() end
         local maxHealth = ent._DrGHUDMaxHealth or ent:GetMaxHealth()
         if health > maxHealth and ent:GetMaxHealth() == 0 then ent._DrGHUDMaxHealth = health end
         DrGHUD.DrawBar(x, y + ecart*1.5, long - ecart*5, larg/5, "HEALTH", health, maxHealth, healthColor, true)
@@ -680,7 +682,9 @@ if CLIENT then
       local y = distance + radius
       local nb = 8
       local offset = -math.pi/2
-      local pos = EyePos()
+      local pos
+      if not possessing then pos = EyePos()
+      else pos = ply:DrG_Possessing():GetPos() end
       local pos2D = Vector(pos.x, pos.y, 0)
       DrGHUD.DrawCircle(x, y, radius, nb, DrGHUD.PickColor("background"), nil, {blur = true})
       local points = DrGHUD.GetCirclePoints(x, y, radius, nb)
@@ -920,7 +924,10 @@ else
               rel = DRGHUD_ALLY
             else rel = DRGHUD_ENEMY end
           elseif ent:IsNPC() or ent.IsDrGNextbot then
-            local disposition = ent:Disposition(ply)
+            local disposition
+            if DrGBase ~= nil and IsValid(ply:DrG_Possessing()) then
+              disposition = ent:Disposition(ply:DrG_Possessing())
+            else disposition = ent:Disposition(ply) end
             if disposition == D_HT or disposition == D_FR then
               rel = DRGHUD_ENEMY
             elseif disposition == D_LI then
