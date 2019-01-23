@@ -535,7 +535,7 @@ if CLIENT then
       local health = ply:Health()
       local maxhealth = ply:GetMaxHealth()
       if possessing then
-        health = ply:DrG_Possessing():HealthNetworked()
+        health = ply:DrG_Possessing():Health()
         maxhealth = ply:DrG_Possessing():GetMaxHealth()
       else DrGHUD.DrawBar(x + ecart*1.25, y + larg/2, long - ecart*2, larg/5, "SUIT", ply:Armor(), 100, DrGHUD.PickColor("armor")) end
       local healthcolor = DrGHUD.PickColor("damage")
@@ -613,9 +613,7 @@ if CLIENT then
         elseif entIcon.rel == DRGHUD_ENEMY then
           healthColor = DrGHUD.PickColor(DRGHUD_ENEMY)
         end
-        local health
-        if ent.IsDrGNextbot then health = ent:HealthNetworked()
-        else health = ent:Health() end
+        local health = ent:Health()
         local maxHealth = ent._DrGHUDMaxHealth or ent:GetMaxHealth()
         if health > maxHealth and ent:GetMaxHealth() == 0 then ent._DrGHUDMaxHealth = health end
         DrGHUD.DrawBar(x, y + ecart*1.5, long - ecart*5, larg/5, "HEALTH", health, maxHealth, healthColor, true)
@@ -709,7 +707,7 @@ if CLIENT then
         else dist = pos2D:Distance(icon.pos2D) end
         local size = ecart/2
         local tr = util.TraceLine({
-          start = pos,
+          start = EyePos(),
           endpos = icon.pos + Vector(0, 0, 10),
           collisiongroup = COLLISION_GROUP_IN_VEHICLE
         })
