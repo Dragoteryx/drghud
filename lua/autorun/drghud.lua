@@ -495,7 +495,7 @@ if CLIENT then
         break
       end
     end
-    local possessing = DrGBase ~= nil and IsValid(ply:DrG_Possessing())
+    local possessing = DrGBase ~= nil and ply:DrG_IsPossessing()
     local vehicle = ply:InVehicle()
     -- crosshair
     if DrGHUD.Crosshair:GetBool() and GetConVar("crosshair"):GetBool() and not ply:InVehicle() and not possessing then
@@ -910,6 +910,7 @@ else
         if hookres ~= nil then
           rel = hookres
         else
+          local possessing = DrGBase ~= nil and ply:DrG_IsPossessing()
           if ply:EntIndex() == ent:EntIndex() then
             rel = DRGHUD_NEUTRAL
           elseif ent:IsPlayer() then
@@ -923,12 +924,22 @@ else
             else rel = DRGHUD_ENEMY end
           elseif ent:IsNPC() or ent.IsDrGNextbot then
             local disposition
-            if DrGBase ~= nil and IsValid(ply:DrG_Possessing()) then
+            if possessing then
               disposition = ent:Disposition(ply:DrG_Possessing())
             else disposition = ent:Disposition(ply) end
             if disposition == D_HT or disposition == D_FR then
               rel = DRGHUD_ENEMY
             elseif disposition == D_LI then
+              rel = DRGHUD_ALLY
+            else rel = DRGHUD_NEUTRAL end
+          elseif ent.IV04NextBot then
+            local disposition
+            if possessing then
+              disposition = ent:CheckRelationships(ply:DrG_Possessing())
+            else disposition = ent:CheckRelationships(ply) end
+            if disposition == "foe" then
+              rel = DRGHUD_ENEMY
+            elseif disposition == "friend" then
               rel = DRGHUD_ALLY
             else rel = DRGHUD_NEUTRAL end
           elseif ent.Type == "nextbot" then
