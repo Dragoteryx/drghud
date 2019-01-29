@@ -169,7 +169,7 @@ if CLIENT then
     return colors[name]
   end
 
-  local names = {
+  local wepNames = {
     ["weapon_crowbar"] = "Crowbar",
     ["weapon_ar2"] = "AR2",
     ["weapon_357"] = ".357 Magnum",
@@ -190,7 +190,7 @@ if CLIENT then
     ["hands"] = "None"
   }
   function DrGHUD.WeaponName(weapon)
-    return weapon.PrintName or names[weapon:GetClass()] or weapon:GetClass()
+    return weapon.PrintName or wepNames[weapon:GetClass()] or weapon:GetClass()
   end
 
   -- beacons
@@ -498,7 +498,9 @@ if CLIENT then
     local possessing = DrGBase ~= nil and ply:DrG_IsPossessing()
     local vehicle = ply:InVehicle()
     -- crosshair
-    if DrGHUD.Crosshair:GetBool() and GetConVar("crosshair"):GetBool() and not ply:InVehicle() and not possessing then
+    if DrGHUD.Crosshair:GetBool() and GetConVar("crosshair"):GetBool() and
+    not ply:InVehicle() and not possessing and
+    (not IsValid(ply:GetActiveWeapon()) or ply:GetActiveWeapon().DrawCrosshair ~= false) then
       local x = scrWidth/2
       local y = scrHeight/2
       local color
