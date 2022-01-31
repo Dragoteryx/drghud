@@ -41,6 +41,7 @@ else
     if not DrGHUD.EntityInfoAllowed:GetBool() then return end
     if not DrGHUD.EntityInfoEnabled:GetBool() then return end
     local ply = LocalPlayer()
+    if ply:InVehicle() then return end
     local ent = ply:GetEyeTraceNoCursor().Entity
     if IsValid(ent) and ent ~= ply:DrG_GetPossessing() then
       DrGHUD.SetOrigin(1.5, 1)

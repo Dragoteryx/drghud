@@ -39,12 +39,12 @@ end
 
 local function DrawPerfInfo(me)
   if not DrGHUD.StatusInfoEnabled:GetBool() then return end
+  local veh = me:IsPlayer() and me:DrG_GetVehicle() or NULL
   local ply = LocalPlayer()
   DrGHUD.DrawWindow(22, 3, "left")
 
   local speed
-  if me:IsPlayer() and me:InVehicle() then
-    speed = me:GetVehicle():GetVelocity():Length()
+  if IsValid(veh) then speed = veh:GetVelocity():Length()
   else speed = me:GetVelocity():Length() end
   local converted = DrGHUD.ConvertSpeedUnits(speed)
   local text = "???????"
@@ -52,19 +52,25 @@ local function DrawPerfInfo(me)
     local unit = DrGHUD.SpeedUnit:GetString()
     text = math.Round(converted).." "..unit
   end
-  DrGHUD.PrepareSquare(1.5, 1.5, 2)
-  DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.SpeedMaterial)
+  if IsValid(veh) then
+    local icon = DrGHUD.GetVehicleIcon(veh)
+    DrGHUD.PrepareSquare(1.5, 1.6, 2)
+    DrGHUD.Fill(DrGHUD.MainColor.Value, icon)
+  else
+    DrGHUD.PrepareSquare(1.5, 1.5, 2)
+    DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.SpeedIcon)
+  end
   DrGHUD.DrawText(8, 1, text, {xAlign = TEXT_ALIGN_RIGHT})
   DrGHUD.DrawLine(9, 0, 9, 3)
 
   DrGHUD.PrepareSquare(10.5, 1.55, 1.8)
-  DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.FPSMaterial)
+  DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.FPSIcon)
   DrGHUD.DrawText(14.5, 1, FPS, {xAlign = TEXT_ALIGN_RIGHT})
   DrGHUD.DrawLine(15.5, 0, 15.5, 3)
 
   local ping = math.Round(ply:Ping())
   DrGHUD.PrepareSquare(17.2, 1.6, 2.3)
-  DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.PingMaterial)
+  DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.PingIcon)
   DrGHUD.DrawText(21, 1, ping, {xAlign = TEXT_ALIGN_RIGHT})
 end
 

@@ -12,6 +12,12 @@ local function Sweep()
   return CurTime() % (DrGHUD.RadarSweep:GetFloat() + 1)
 end
 
+local INVALID_VEHICLES = { prop_vehicle_prisoner_pod = true }
+local function IsVehicle(ent)
+  if INVALID_VEHICLES[ent:GetClass()] then return false end
+  return ent:IsVehicle() or ent.LFS or ent.isWacAircraft
+end
+
 if SERVER then
   util.AddNetworkString("DrGHUD/PlayerDeath")
   util.AddNetworkString("DrGHUD/RadarData")
@@ -23,7 +29,7 @@ if SERVER then
   end)
 
   local function ShowOnRadar(ent)
-    return DrGBase.IsTarget(ent) or ent:IsVehicle()
+    return DrGBase.IsTarget(ent) or IsVehicle(ent)
     or (ent:IsWeapon() and not IsValid(ent:GetOwner()))
   end
 
@@ -83,6 +89,9 @@ else
   DrGHUD.RadarEnabled = DrGBase.ClientConVar("drghud_radar", "1")
   DrGHUD.RadarScale = DrGBase.ClientConVar("drghud_radar_scale", "1")
   DrGHUD.RadarLastDeath = DrGBase.ConVar("drghud_radar_last_death", "1")
+  DrGHUD.RadarDisableIcons = DrGBase.ClientConVar("drghud_radar_disable_icons", "0")
+  DrGHUD.RadarVehicles = DrGBase.ClientConVar("drghud_radar_vehicles", "1")
+  DrGHUD.RadarWeapons = DrGBase.ClientConVar("drghud_radar_weapons", "1")
   DrGHUD.CompassEnabled = DrGBase.ClientConVar("drghud_compass", "1")
   DrGHUD.CompassNorthOnly = DrGBase.ClientConVar("drghud_compass_north_only", "0")
 
@@ -101,7 +110,8 @@ else
   net.Receive("DrGHUD/RadarData", function()
     for _ = 1, net.ReadUInt(32) do
       local ent = net.ReadEntity()
-      RADAR_DATA[ent] = {
+      RADAR_DATA[ent:EntIndex()] = {
+        Entity = ent,
         InPVS = net.ReadBool(),
         Pos = net.ReadVector(),
         Disp = net.ReadUInt(3),
@@ -114,12 +124,34 @@ else
     return DrGBase.GetText("drghud.compass."..placeholder, ...)
   end
 
+  local function IsVehicleEmpty(veh)
+    if veh.LFS then
+      local seats = veh:GetPassengerSeats()
+      for _, seat in pairs(seats) do
+        if not IsValid(seat) then continue end
+        local passenger = seat:GetPassenger(0)
+        if IsValid(passenger) then return false end
+      end
+      return true
+    elseif veh.isWacAircraft then
+      local switcher = veh:GetSwitcher()
+      if not IsValid(switcher) then return true end
+      for _, seat in ipairs(switcher.seats) do
+        if not IsValid(seat) then continue end
+        local passenger = seat:GetPassenger(0)
+        if IsValid(passenger) then return false end
+      end
+      return true
+    else return not IsValid(veh:GetDriver()) end
+  end
+
   hook.Add("DrGHUD/Paint", "DrGHUD/Radar", function()
     if not DrGHUD.RadarAllowed:GetBool() then return end
     if not DrGHUD.RadarEnabled:GetBool() then return end
     local ply = LocalPlayer()
     local me = ply:DrG_GetPossessingOrSelf()
     local radius = 15*DrGHUD.RadarScale:GetFloat()
+    local range = DrGHUD.RadarRange:GetFloat()
     local sweepEnabled = SweepEnabled()
     local sweep = Sweep()
     DrGHUD.SetOrigin(-radius - 1, radius + 1)
@@ -153,28 +185,59 @@ else
       return coords.x, coords.y
     end
     -- entities
-    for ent, data in pairs(RADAR_DATA) do
+    for _, data in pairs(RADAR_DATA) do
+      local ent = data.Entity
       if not IsValid(ent) then continue end
       local time = math.max(0, CurTime() - data.LastUpdate)
       if time > 1 and sweepEnabled then continue end
       local usePVS = data.InPVS and not sweepEnabled
       local entPos = usePVS and ent:WorldSpaceCenter() or data.Pos
-      local heightDiff = entPos.z - EyePos().z
+      if (me:GetPos()-entPos):Length2D() > range then continue end
       local hitWorld, angle = util.TraceLine({
         start = EyePos(), endpos = entPos,
         filter = ply
       }).HitWorld, CalcAngle(entPos)
       local visible = not hitWorld and math.abs(angle) < 45
       local x, y = ToRadarCoords(entPos)
-      if ent:IsVehicle() then
-        -- todo
-      elseif ent:IsWeapon() then
-        -- todo
+      if ent:IsWeapon() and DrGHUD.RadarWeapons:GetBool() then
+        if IsValid(ent:GetOwner()) then continue end
+        local color = DrGHUD.WeaponColor.Value
+        if sweepEnabled then color.a = (1 - time)*255 end
+        if DrGHUD.RadarDisableIcons:GetBool() then
+          local height = entPos.z - EyePos().z
+          if height > 100 then DrGHUD.PrepareTriangle(x, y, 0.6, -90)
+          elseif height < -100 then DrGHUD.PrepareTriangle(x, y, 0.6, 90)
+          else DrGHUD.PrepareDiamond(x, y, 0.6) end
+          if visible then DrGHUD.Fill(color)
+          else DrGHUD.Stroke(color) end
+        else
+          DrGHUD.PrepareSquare(x, y, 1.25)
+          DrGHUD.Fill(color, DrGHUD.WeaponIcon)
+        end
+        color.a = 255
+      elseif IsVehicle(ent) and DrGHUD.RadarVehicles:GetBool() then
+        if not IsVehicleEmpty(ent) then continue end
+        local color = DrGHUD.VehicleColor.Value
+        if sweepEnabled then color.a = (1 - time)*255 end
+        if DrGHUD.RadarDisableIcons:GetBool() then
+          local height = entPos.z - EyePos().z
+          if height > 100 then DrGHUD.PrepareTriangle(x, y, 0.6, -90)
+          elseif height < -100 then DrGHUD.PrepareTriangle(x, y, 0.6, 90)
+          else DrGHUD.PrepareDiamond(x, y, 0.6) end
+          if visible then DrGHUD.Fill(color)
+          else DrGHUD.Stroke(color) end
+        else
+          local icon = DrGHUD.GetVehicleIcon(ent)
+          DrGHUD.PrepareSquare(x, y, 1.5)
+          DrGHUD.Fill(color, icon)
+        end
+        color.a = 255
       else
+        local height = entPos.z - EyePos().z
         local color = DrGHUD.GetDispositionColor(data.Disp)
         if sweepEnabled then color.a = (1 - time)*255 end
-        if heightDiff > 100 then DrGHUD.PrepareTriangle(x, y, 0.6, -90)
-        elseif heightDiff < -100 then DrGHUD.PrepareTriangle(x, y, 0.6, 90)
+        if height > 100 then DrGHUD.PrepareTriangle(x, y, 0.6, -90)
+        elseif height < -100 then DrGHUD.PrepareTriangle(x, y, 0.6, 90)
         else DrGHUD.PrepareDiamond(x, y, 0.6) end
         if visible then DrGHUD.Fill(color)
         else DrGHUD.Stroke(color) end
@@ -220,7 +283,7 @@ else
       if LAST_DEATH and DrGHUD.RadarLastDeath:GetBool() then
         local x, y = ToRadarCoords(LAST_DEATH.Pos)
         DrGHUD.PrepareSquare(x, y, 1.5)
-        DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.DeathMaterial)
+        DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.DeathIcon)
       end
       -- draw center
       DrGHUD.PrepareDiamond(0, 0, 0.6)

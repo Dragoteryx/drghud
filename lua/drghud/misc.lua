@@ -21,10 +21,25 @@ if CLIENT then
 
   -- Materials --
 
-  DrGHUD.DeathMaterial = Material("drghud/death.png")
-  DrGHUD.SpeedMaterial = Material("drghud/speed.png")
-  DrGHUD.FPSMaterial = Material("drghud/fps.png")
-  DrGHUD.PingMaterial = Material("drghud/ping.png")
+  DrGHUD.DeathIcon = Material("drghud/death.png")
+  DrGHUD.SpeedIcon = Material("drghud/speed.png")
+  DrGHUD.FPSIcon = Material("drghud/fps.png")
+  DrGHUD.PingIcon = Material("drghud/ping.png")
+  DrGHUD.WeaponIcon = Material("drghud/weapon.png")
+  DrGHUD.VehicleIcon = Material("drghud/vehicle.png")
+  DrGHUD.HelicopterIcon = Material("drghud/helicopter.png")
+  DrGHUD.PlaneIcon = Material("drghud/plane.png")
+
+  function DrGHUD.GetVehicleIcon(veh)
+    if veh.LFS then
+      if veh:IsHelicopter() then return DrGHUD.HelicopterIcon
+      else return DrGHUD.PlaneIcon end
+    elseif veh.isWacAircraft then
+      if scripted_ents.IsBasedOn(veh:GetClass(), "wac_pl_base") then
+        return DrGHUD.PlaneIcon
+      else return DrGHUD.HelicopterIcon end
+    else return DrGHUD.VehicleIcon end
+  end
 
   -- Colors --
 
@@ -36,17 +51,21 @@ if CLIENT then
     cvars.AddChangeCallback(red:GetName(), function() color.r = red:GetInt() end)
     cvars.AddChangeCallback(green:GetName(), function() color.g = green:GetInt() end)
     cvars.AddChangeCallback(blue:GetName(), function() color.b = blue:GetInt() end)
-    return {
-      Red = red,
-      Green = green,
-      Blue = blue,
-      Value = color,
-      Reset = function()
-        red:Revert()
-        green:Revert()
-        blue:Revert()
-      end
-    }
+    local color = { Red = red, Green = green, Blue = blue, Value = color }
+    function color:AddToPanel(panel, label)
+      panel:AddControl("color", {
+        label = label,
+        red = red:GetName(),
+        green = green:GetName(),
+        blue = blue:GetName()
+      })
+    end
+    function color:Reset()
+      red:Revert()
+      green:Revert()
+      blue:Revert()
+    end
+    return color
   end
 
   DrGHUD.MainColor = HUDColor("main", DrGBase.CLR_SOFT_WHITE)
@@ -55,24 +74,24 @@ if CLIENT then
   DrGHUD.ArmorColor = HUDColor("armor", DrGBase.CLR_ORANGE)
   DrGHUD.AmmoColor = HUDColor("ammo", DrGBase.CLR_SOFT_WHITE)
   DrGHUD.Ammo2Color = HUDColor("ammo2", DrGBase.CLR_ORANGE)
-  DrGHUD.NeutralColor = HUDColor("radar_neutral", DrGBase.CLR_SOFT_WHITE)
-  DrGHUD.AllyColor = HUDColor("radar_ally", DrGBase.CLR_GREEN)
-  DrGHUD.EnemyColor = HUDColor("radar_enemy", DrGBase.CLR_RED)
-  DrGHUD.RadarVehicleColor = HUDColor("radar_vehicle", DrGBase.CLR_ORANGE)
-  DrGHUD.RadarWeaponColor = HUDColor("radar_weapon", DrGBase.CLR_ORANGE)
+  DrGHUD.NeutralColor = HUDColor("neutral", DrGBase.CLR_SOFT_WHITE)
+  DrGHUD.AllyColor = HUDColor("ally", DrGBase.CLR_GREEN)
+  DrGHUD.EnemyColor = HUDColor("enemy", DrGBase.CLR_RED)
+  DrGHUD.WeaponColor = HUDColor("weapon", DrGBase.CLR_ORANGE)
+  DrGHUD.VehicleColor = HUDColor("vehicle", DrGBase.CLR_ORANGE)
 
-  concommand.Add("drghud_cmd_colors_reset", function()
+  concommand.Add("drghud_cmd_reset_colors", function()
     DrGHUD.MainColor:Reset()
     DrGHUD.FullHealthColor:Reset()
     DrGHUD.LowHealthColor:Reset()
-    DrGHUD.SuitColor:Reset()
+    DrGHUD.ArmorColor:Reset()
     DrGHUD.AmmoColor:Reset()
     DrGHUD.Ammo2Color:Reset()
     DrGHUD.NeutralColor:Reset()
     DrGHUD.AllyColor:Reset()
     DrGHUD.EnemyColor:Reset()
-    DrGHUD.RadarVehicleColor:Reset()
-    DrGHUD.RadarWeaponColor:Reset()
+    DrGHUD.VehicleColor:Reset()
+    DrGHUD.WeaponColor:Reset()
   end)
 
   function DrGHUD.GetDispositionColor(disp)

@@ -9,11 +9,12 @@ hook.Add("DrGHUD/Paint", "DrGHUD/Ammo", function()
   if not DrGHUD.AmmoEnabled:GetBool() then return end
   if not LocalPlayer():Alive() then return end
   local ply = LocalPlayer()
-  local weap = ply:GetActiveWeapon()
-  if IsValid(weap) then
+  if ply:InVehicle() then return end
+  local wep = ply:GetActiveWeapon()
+  if IsValid(wep) then
     DrGHUD.SetOrigin(-23.5, -12)
     DrGHUD.DrawWindow(22, 11, "right")
-    DrGHUD.DrawText(1, 0.635, weap:GetPrintName(), {maxLength = 20})
+    DrGHUD.DrawText(1, 0.635, wep:GetPrintName(), {maxLength = 20})
     DrGHUD.DrawLine(0, 2.5, 22, 2.5)
 
     for i = 1, 2 do
@@ -22,16 +23,16 @@ hook.Add("DrGHUD/Paint", "DrGHUD/Ammo", function()
       if i == 1 then
         pieX, pieY, pieR = 4, 6.75, 3
         textX, textY = 8, 3.5
-        ammo = weap:Clip1()
-        clipsize = weap:GetMaxClip1()
-        ammoType = weap:GetPrimaryAmmoType()
+        ammo = wep:Clip1()
+        clipsize = wep:GetMaxClip1()
+        ammoType = wep:GetPrimaryAmmoType()
         color = DrGHUD.AmmoColor.Value
       else
         pieX, pieY, pieR = 10, 8, 2
         textX, textY = 13, 6.5
-        ammo = weap:Clip2()
-        clipsize = weap:GetMaxClip2()
-        ammoType = weap:GetSecondaryAmmoType()
+        ammo = wep:Clip2()
+        clipsize = wep:GetMaxClip2()
+        ammoType = wep:GetSecondaryAmmoType()
         color = DrGHUD.Ammo2Color.Value
       end
       local ammoCount = ply:GetAmmoCount(ammoType)

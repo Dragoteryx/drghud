@@ -94,7 +94,7 @@ function DrGHUD.PreparePolygon(x, y, ...)
       table.insert(polygon, {
         x = TranslateX(x) + ScaleValue(point.x),
         y = TranslateY(y) + ScaleValue(point.y),
-        u = point.u, v = point.v
+        u = point.u or 0, v = point.v or 0
       })
     end
     table.insert(polygons, polygon)

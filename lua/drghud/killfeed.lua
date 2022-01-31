@@ -70,7 +70,7 @@ else
       local death = KILLFEED[i]
       DrGHUD.DrawWindow(22, 3, "right")
       DrGHUD.PrepareSquare(11, 1.5, 2)
-      DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.DeathMaterial)
+      DrGHUD.Fill(DrGHUD.MainColor.Value, DrGHUD.DeathIcon)
       if death.attackerPlayer then DrGHUD.DrawText(1, 0.75, death.attacker, {color = DrGHUD.GetDispositionColor(death.attackerDisp), maxLength = 8})
       else DrGHUD.DrawText(1, 0.75, language.GetPhrase(death.attacker), {color = DrGHUD.GetDispositionColor(death.attackerDisp), maxLength = 8}) end
       if death.entPlayer then DrGHUD.DrawText(21, 0.75, death.ent, {color = DrGHUD.GetDispositionColor(death.entDisp), xAlign = TEXT_ALIGN_RIGHT, maxLength = 8})
